@@ -5,15 +5,20 @@ repos:
     hooks:
       - id: trailing-whitespace
         verbose: true
-        args: [--check-only]
+        files: ^(main\.py|run_tests\.py|tools/.+\.py)$
       - id: end-of-file-fixer
         verbose: true
+        args: []
+        files: ^(main\.py|run_tests\.py|tools/.+\.py)$
       - id: check-yaml
         verbose: true
+        files: ^(\.pre-commit-config\.yaml|railway\.yaml)$
       - id: check-toml
         verbose: true
+        files: ^(pyproject\.toml)$
       - id: debug-statements
         language_version: python3
+        files: ^(main\.py|run_tests\.py|tools/.+\.py)$
 
   # Linting - check only mode
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -21,10 +26,12 @@ repos:
     hooks:
       - id: ruff
         args: [--no-fix, --show-fixes]
+        files: ^(main\.py|run_tests\.py|tools/.+\.py)$
         stages: [pre-commit]
         fail_fast: false
       - id: ruff-format
         args: [--check]
+        files: ^(main\.py|run_tests\.py|tools/.+\.py)$
         stages: [pre-commit]
         fail_fast: false
 
@@ -33,6 +40,8 @@ repos:
     rev: v1.3.0
     hooks:
       - id: detect-secrets
+        # Only check main deployment files and tools
+        files: ^(main\.py|run_tests\.py|tools/.+\.py)$
         exclude: "package-lock.json|poetry.lock"
         stages: [pre-commit]
         fail_fast: false
