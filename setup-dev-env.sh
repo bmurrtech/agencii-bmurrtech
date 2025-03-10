@@ -98,7 +98,7 @@ log_success "pre-commit configuration updated"
 
 # Install pre-commit hooks with all necessary hook types
 log_info "Installing pre-commit hooks..."
-pre-commit install --install-hooks --hook-types pre-commit,commit-msg,pre-push,post-checkout,prepare-commit-msg
+pre-commit install --install-hooks --hook-types pre-commit,commit-msg,pre-push,post-checkout,prepare-commit-msg,post-commit
 log_success "pre-commit hooks installed"
 
 # Virtual Environment Setup
@@ -124,26 +124,79 @@ if [ ! -f ".env" ] && [ -f ".env.example" ]; then
     log_success ".env file created (remember to update with your actual values)"
 fi
 
+# Create GitHub Actions workflow directory and file if they don't exist
+if [ ! -d ".github/workflows" ]; then
+    log_info "Creating GitHub Actions workflow directory..."
+    mkdir -p .github/workflows
+fi
+
+if [ ! -f ".github/workflows/python-tests.yaml" ]; then
+    log_info "Creating python-tests.yaml..."
+    cat > .github/workflows/python-tests.yaml << 'EOL'
+name: Python Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run Ruff linting
+      run: |
+        ruff check . --no-fix --show-fixes
+        ruff format . --check
+
+    - name: Check for secrets
+      run: detect-secrets scan
+
+    - name: Run tests
+      run: pytest tests/
+
+    - name: Type checking
+      run: mypy .
+EOL
+    log_success "python-tests.yaml created"
+fi
+
 # Display development workflow guidance
 echo ""
 log_info "Development Workflow Guidelines:"
 echo "1. Branch Naming Conventions:"
-echo "   • feature/XXX-description  : For new features"
+echo "   • feat/XXX-description  : For new features"
 echo "   • fix/XXX-description     : For bug fixes"
 echo "   • hotfix/XXX-description  : For urgent fixes"
 echo "   • release/X.Y.Z          : For releases"
 echo "   • dev/username/description: For personal development"
 
 echo ""
-echo "2. Code Quality Tools:"
+echo "2. Code Quality Tools (Advisory Mode):"
 echo "   • Check issues : pre-commit run --all-files"
-echo "   • Manual format: ruff format ."
-echo "   • Manual lint  : ruff check --fix ."
+echo "   • Format check: ruff format . --check"
+echo "   • Lint check  : ruff check . --no-fix --show-fixes"
 
 echo ""
 echo "3. Commit Message Format:"
-echo "   <type>(<scope>): <description>"
-echo "   Types: feat, fix, docs, style, refactor, test, chore"
+echo "   [TYPE][SP-X] Brief Description #IssueNumber"
+echo "   Types: FEAT, FIX, DOCS, REFACTOR, TEST"
 
 echo ""
 log_info "IMPORTANT: To activate the Python virtual environment, please run:"
