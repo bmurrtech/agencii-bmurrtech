@@ -1,11 +1,11 @@
 repos:
-  # Essential code quality checks - informative only, no auto-fixing
+  # Essential code quality checks - informative only
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
       - id: trailing-whitespace
         verbose: true
-        args: [--check-only]  # Only check, don't modify
+        args: [--check-only]
       - id: end-of-file-fixer
         verbose: true
       - id: check-yaml
@@ -15,138 +15,41 @@ repos:
       - id: debug-statements
         language_version: python3
 
-  # Linting - check only mode, no auto-fixing
+  # Linting - check only mode
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.3.4
     hooks:
       - id: ruff
-        args: [--no-fix, --show-fixes]  # Show what would be fixed instead of fixing
+        args: [--no-fix, --show-fixes]
         stages: [pre-commit]
-        fail_fast: false  # Allow commit even with issues
+        fail_fast: false
       - id: ruff-format
-        args: [--check]  # Check only, don't modify
+        args: [--check]
         stages: [pre-commit]
-        fail_fast: false  # Allow commit even with issues
+        fail_fast: false
 
-  # Run tests before committing (advisory)
-  - repo: local
-    hooks:
-      - id: run-tests
-        name: Run Tests
-        entry: python run_tests.py
-        language: system
-        pass_filenames: false
-        always_run: true
-        stages: [pre-commit]
-        verbose: true
-        fail_fast: false  # Allow commit even if tests fail
-
-  # Security checks - advisory mode
+  # Security checks
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.3.0
     hooks:
       - id: detect-secrets
         exclude: "package-lock.json|poetry.lock"
         stages: [pre-commit]
-        fail_fast: false  # Allow commit even with detected secrets
+        fail_fast: false
 
-  # Git workflow guidance - all advisory
+  # Simple branch protection
   - repo: local
     hooks:
-      # Branch naming guidance
-      - id: branch-name-check
-        name: Branch Naming Check
-        entry: |
-          #!/bin/bash
-          branch=$(git rev-parse --abbrev-ref HEAD)
-          echo "Current branch: $branch"
-          echo ""
-          echo "📝 Branch Naming Guidelines:"
-          echo "• feature/XXX-description  : For new features (e.g., feature/AUTH-123-oauth)"
-          echo "• fix/XXX-description     : For bug fixes (e.g., fix/UI-456-button-alignment)"
-          echo "• hotfix/XXX-description  : For urgent fixes (e.g., hotfix/SEC-789-vulnerability)"
-          echo "• release/X.Y.Z          : For releases (e.g., release/1.2.0)"
-          echo "• dev/username/description: For personal dev branches"
-          echo ""
-          echo "💡 Tips:"
-          echo "• Use lowercase letters and hyphens"
-          echo "• Include ticket/issue number if applicable"
-          echo "• Keep descriptions brief but meaningful"
-          echo ""
-          if ! [[ $branch =~ ^(feature|fix|hotfix|release|dev)/ ]]; then
-            echo "⚠️  Current branch name doesn't follow conventions"
-            echo "Consider renaming with: git branch -m new-name"
-          fi
-          exit 0  # Advisory only
-        language: system
-        stages: [post-checkout, pre-push]
-        verbose: true
-
-      # Commit message guidance
-      - id: commit-message-check
-        name: Commit Message Guidelines
-        entry: |
-          #!/bin/bash
-          echo "💬 Commit Message Guidelines:"
-          echo "Format: <type>(<scope>): <description>"
-          echo ""
-          echo "Types:"
-          echo "• feat     : New feature"
-          echo "• fix      : Bug fix"
-          echo "• docs     : Documentation"
-          echo "• style    : Formatting, missing semicolons, etc"
-          echo "• refactor : Code restructuring"
-          echo "• test     : Adding tests"
-          echo "• chore    : Maintenance tasks"
-          echo ""
-          echo "Examples:"
-          echo "✓ feat(auth): implement OAuth2 login"
-          echo "✓ fix(api): resolve rate limiting issue"
-          echo "✓ docs: update installation guide"
-          exit 0  # Advisory only
-        language: system
-        stages: [prepare-commit-msg]
-        verbose: true
-
-      # Protected branch warning
       - id: protected-branch-check
         name: Protected Branch Warning
         entry: |
           #!/bin/bash
           branch=$(git rev-parse --abbrev-ref HEAD)
-          protected_branches="^(main|master|develop|production|staging)$"
-
-          if [[ $branch =~ $protected_branches ]]; then
-              echo "⚠️  Warning: You're working on protected branch: $branch"
-              echo ""
-              echo "💡 Recommended workflow:"
-              echo "• Create a feature branch: git checkout -b feature/your-feature"
-              echo "• Make your changes and commit"
-              echo "• Create a Pull Request for review"
-              echo ""
-              read -p "Continue anyway? (y/N) " -n 1 -r
-              echo
-              if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-                  echo "Aborting push to protected branch"
-                  exit 1
-              fi
+          if [[ $branch =~ ^(main|master|develop|production|staging)$ ]]; then
+              echo "⚠️  Warning: You're on protected branch: $branch"
+              exit 1
           fi
           exit 0
         language: system
         stages: [pre-push]
-        verbose: true
-
-      # Show available commands for manual fixes
-      - id: show-fix-commands
-        name: Available Fix Commands
-        entry: |
-          #!/bin/bash
-          echo "🛠️  Manual Fix Commands:"
-          echo "• Format code    : ruff format ."
-          echo "• Fix lint issues: ruff check --fix ."
-          echo ""
-          echo "Remember: Always review changes before committing!"
-          exit 0
-        language: system
-        stages: [post-commit]
         verbose: true

@@ -37,42 +37,67 @@ else
     exit 1
 fi
 
-# Ensure the .pre-commit-config.yaml exists in the repository root
-if [ ! -f "./.pre-commit-config.yaml" ]; then
-    log_error "Error: .pre-commit-config.yaml not found in the repository root."
-    log_error "Please ensure the file exists before running this script."
-    exit 1
-fi
+# Create .pre-commit-config.yaml if it doesn't exist
+if [ ! -f ".pre-commit-config.yaml" ]; then
+    log_info "Creating .pre-commit-config.yaml..."
+    cat > .pre-commit-config.yaml << 'EOL'
+repos:
+  # Essential code quality checks - informative only
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        verbose: true
+        args: [--check-only]
+      - id: end-of-file-fixer
+        verbose: true
+      - id: check-yaml
+        verbose: true
+      - id: check-toml
+        verbose: true
+      - id: debug-statements
+        language_version: python3
 
-# Setup code quality tools
-log_info "Setting up code quality tools..."
+  # Linting - check only mode
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.3.4
+    hooks:
+      - id: ruff
+        args: [--no-fix, --show-fixes]
+        stages: [pre-commit]
+        fail_fast: false
+      - id: ruff-format
+        args: [--check]
+        stages: [pre-commit]
+        fail_fast: false
 
-# Check and install ruff if needed (for manual formatting/linting)
-if ! command_exists ruff; then
-    log_info "Installing ruff for code quality checks..."
-    if command_exists pip3; then
-        pip3 install ruff
-    elif command_exists pip; then
-        pip install ruff
-    else
-        log_error "Error: pip is not installed. Please install pip and re-run the script."
-        exit 1
-    fi
-    log_success "ruff installed successfully"
-else
-    log_info "ruff is already installed"
-fi
+  # Security checks
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.3.0
+    hooks:
+      - id: detect-secrets
+        exclude: "package-lock.json|poetry.lock"
+        stages: [pre-commit]
+        fail_fast: false
 
-# Create necessary baseline files for hooks
-log_info "Setting up pre-commit environment..."
-
-# Create an empty secrets baseline if it doesn't exist
-if [ ! -f ".secrets.baseline" ]; then
-    log_info "Creating empty .secrets.baseline file"
-    echo "{\"version\": \"1.4.0\", \"plugins_used\": [], \"filters\": {}, \"results\": {}, \"generated_at\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"}" > .secrets.baseline
-    log_success ".secrets.baseline created"
-else
-    log_info ".secrets.baseline already exists"
+  # Simple branch protection
+  - repo: local
+    hooks:
+      - id: protected-branch-check
+        name: Protected Branch Warning
+        entry: |
+          #!/bin/bash
+          branch=$(git rev-parse --abbrev-ref HEAD)
+          if [[ $branch =~ ^(main|master|develop|production|staging)$ ]]; then
+              echo "⚠️  Warning: You're on protected branch: $branch"
+              exit 1
+          fi
+          exit 0
+        language: system
+        stages: [pre-push]
+        verbose: true
+EOL
+    log_success ".pre-commit-config.yaml created"
 fi
 
 # Check if pre-commit is installed; if not, install it
@@ -98,7 +123,10 @@ log_success "pre-commit configuration updated"
 
 # Install pre-commit hooks with all necessary hook types
 log_info "Installing pre-commit hooks..."
-pre-commit install --install-hooks --hook-types pre-commit,commit-msg,pre-push,post-checkout,prepare-commit-msg,post-commit
+for hook_type in "pre-commit" "commit-msg" "pre-push" "post-checkout" "prepare-commit-msg" "post-commit"; do
+    log_info "Installing $hook_type hook..."
+    pre-commit install --hook-type $hook_type
+done
 log_success "pre-commit hooks installed"
 
 # Virtual Environment Setup
@@ -177,6 +205,93 @@ EOL
     log_success "python-tests.yaml created"
 fi
 
+# Create DEV_README.md if it doesn't exist
+if [ ! -f "DEV_README.md" ]; then
+    log_info "Creating DEV_README.md..."
+    cat > DEV_README.md << 'EOL'
+# Development Guide
+
+## Quick Start
+1. Activate virtual environment:
+   ```bash
+   source .venv/bin/activate   # Unix
+   .venv\Scripts\activate.bat  # Windows
+   ```
+
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+## Code Quality Tools
+
+### Pre-commit Hooks (Advisory Mode)
+```bash
+# Run all checks
+pre-commit run --all-files
+
+# Format code
+ruff format .
+
+# Check linting
+ruff check . --no-fix --show-fixes
+```
+
+### Testing
+```bash
+pytest tests/
+```
+
+## Branch Naming Convention
+```bash
+[TYPE][SP-X] Brief Description #IssueNumber
+
+# Examples:
+[FEAT][SP-5] OAuth2 Social Login Integration #123
+[FIX][SP-2] Resolve API Rate Limiting Bug #456
+[REFACTOR][SP-3] Optimize Database Query Performance #789
+[DOCS][SP-1] Update API Authentication Docs #234
+[TEST][SP-2] Add E2E Tests for Payment Flow #567
+```
+
+### Type Categories
+- `[FEAT]` - New feature
+- `[FIX]` - Bug fix
+- `[REFACTOR]` - Code restructuring
+- `[DOCS]` - Documentation
+- `[TEST]` - Testing changes
+
+### Story Points (SP)
+- `SP-1` - Quick fix (< 1 hour)
+- `SP-2` - Simple task (2-4 hours)
+- `SP-3` - Medium task (1 day)
+- `SP-5` - Complex task (2-3 days)
+- `SP-8` - Major feature (3+ days)
+
+## Protected Branches
+- `main` - Production code
+- `develop` - Integration branch
+- `staging` - Pre-production testing
+- `production` - Live deployment
+
+## Common Issues & Solutions
+
+### Pre-commit Failures
+1. Review error messages
+2. Run format and lint fixes
+3. Commit changes
+4. If issues persist, check DEV_README.md or consult team lead
+
+### Environment Setup
+1. Ensure virtual environment is activated
+2. Verify all dependencies are installed
+3. Check .env file configuration
+
+For more detailed information, refer to the main README.md
+EOL
+    log_success "DEV_README.md created"
+fi
+
 # Display development workflow guidance
 echo ""
 log_info "Development Workflow Guidelines:"
@@ -208,3 +323,96 @@ log_success "---------------------------------------------"
 log_success "Development environment setup complete!"
 log_success "Use pre-commit checks for guidance and manual fixes as needed."
 log_success "---------------------------------------------"
+
+# Update final message to reference both READMEs
+echo ""
+log_info "Development Setup Complete!"
+echo "📚 Please review:"
+echo "   • README.md     - Project overview and setup"
+echo "   • DEV_README.md - Development guidelines and workflows"
+echo ""
+log_info "IMPORTANT: To activate the Python virtual environment, please run:"
+echo "For macOS/Linux:  source .venv/bin/activate"
+echo "For Windows CMD:   .venv\\Scripts\\activate.bat"
+echo "For Windows PowerShell: .venv\\Scripts\\Activate.ps1"
+echo ""
+log_success "---------------------------------------------"
+log_success "Development environment setup complete!"
+log_success "---------------------------------------------"
+
+# Add this function near the start of the script, after other function definitions
+check_requirements() {
+    local req_file="requirements.txt"
+    log_info "Checking development dependencies..."
+    
+    # List of required development packages with versions
+    local dev_packages=(
+        "pre-commit>=3.5.0"
+        "ruff>=0.3.4"
+        "pytest>=7.0.0"
+        "mypy>=1.0.0"
+        "detect-secrets>=1.3.0"
+    )
+    
+    if [ -f "$req_file" ]; then
+        echo ""
+        log_info "Found existing requirements.txt. Checking for missing development dependencies..."
+        
+        # Check for missing packages
+        local missing_packages=()
+        for package in "${dev_packages[@]}"; do
+            package_name=$(echo "$package" | cut -d'>=' -f1)
+            if ! grep -q "^$package_name" "$req_file"; then
+                missing_packages+=("$package")
+            fi
+        done
+        
+        if [ ${#missing_packages[@]} -gt 0 ]; then
+            echo ""
+            log_info "Missing development dependencies:"
+            for package in "${missing_packages[@]}"; do
+                echo "   $package"
+            done
+            echo ""
+            read -p "Would you like to add these dependencies to requirements.txt? (y/N) " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                echo -e "\n# Development dependencies" >> "$req_file"
+                for package in "${missing_packages[@]}"; do
+                    echo "$package" >> "$req_file"
+                done
+                log_success "Dependencies added to requirements.txt"
+                log_info "Installing new dependencies..."
+                if command_exists pip3; then
+                    pip3 install -r "$req_file"
+                else
+                    pip install -r "$req_file"
+                fi
+            else
+                log_warning "Skipped adding dependencies. You may need to add them manually later."
+            fi
+        else
+            log_success "All development dependencies are present!"
+        fi
+    else
+        echo ""
+        log_warning "No requirements.txt found."
+        read -p "Would you like to create requirements.txt with development dependencies? (y/N) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "# Development dependencies" > "$req_file"
+            for package in "${dev_packages[@]}"; do
+                echo "$package" >> "$req_file"
+            done
+            log_success "Created requirements.txt with development dependencies"
+            log_info "Installing dependencies..."
+            if command_exists pip3; then
+                pip3 install -r "$req_file"
+            else
+                pip install -r "$req_file"
+            fi
+        else
+            log_warning "Skipped creating requirements.txt. You may need to create it manually later."
+        fi
+    fi
+}
