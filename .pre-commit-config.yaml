@@ -30,10 +30,8 @@ repos:
         stages: [pre-commit]
         fail_fast: false
       - id: ruff-format
-        args: [--check]
         files: ^(main\.py|run_tests\.py|tools/.+\.py)$
         stages: [pre-commit]
-        fail_fast: false
 
   # Security checks
   - repo: https://github.com/Yelp/detect-secrets

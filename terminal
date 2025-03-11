@@ -1,0 +1,2 @@
+# Run this command to format all problematic files
+ruff format main.py run_tests.py tools/ExampleTool3.py tools/agent1/ExampleTool1.py tools/agent2/ExampleTool2.py 
