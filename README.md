@@ -19,8 +19,8 @@ The purpose of this template is to demonstrate best practices for setting up an 
 1. Clone this repository:
 
    ```bash
-   git clone https://github.com/vrsen-ai-solutions/agency-swarm-base-template.git
-   cd agency-swarm-base-template
+   git clone https://github.com/<this_repo>>
+   cd <repo_name>>
    ```
 
 2. Install the required dependencies:
@@ -34,23 +34,23 @@ The purpose of this template is to demonstrate best practices for setting up an 
 
 4. Set up development environment:
    ```bash
-   chmod +x setup_dev_env.sh
-   ./setup_dev_env.sh
+   chmod +x setup-dev-env.sh
+   ./setup-dev-env.sh
    ```
 
 5. Explore the `agents` and `tools` directories to see example implementations.
 
 6. Run the example agency:
    ```python
-   python backend/ExampleAgency/agency.py
+   python <Agency_Name>/LocalAgency.py
    ```
 
 ## Development Workflow & Standards
 
 ### 🌿 Branch Structure
 ```bash
-main        # Production-ready code
-develop     # Integration branch
+main        # Production-ready code (PM controlled)
+staging     # Pre-production testing (merge your branches here)
 feature/*   # New features (e.g., feature/AUTH-123-oauth)
 fix/*       # Bug fixes (e.g., fix/UI-456-button-alignment)
 hotfix/*    # Urgent fixes (e.g., hotfix/SEC-789-vulnerability)
@@ -84,13 +84,13 @@ docs: update installation guide
 
 1. **Start New Work**
    ```bash
-   git checkout main
+   git checkout staging
    git pull
    git checkout -b feature/XXX-description
    ```
 
 2. **Pre-commit Checks**
-   The following checks run automatically:
+   The following checks run automatically on crucial files:
    - Code formatting (Ruff)
    - Linting
    - Secret scanning
@@ -100,17 +100,22 @@ docs: update installation guide
 3. **Making Changes**
    ```bash
    git add .
-   git commit -m "type(scope): description"
+   git commit -m "[TYPE][SP-X] description #issue"
    ```
 
-4. **Create Pull Request**
+4. **Create Pull Request to Staging**
    ```bash
-   git checkout main
+   git checkout staging
    git pull
    git checkout your-branch
-   git merge main
+   git merge staging
    git push origin your-branch
    ```
+
+5. **After PR Approval**
+   - Code is merged to `staging`
+   - Railway deploys for testing
+   - PM reviews and merges to `main` if approved
 
 ## Code Quality
 
