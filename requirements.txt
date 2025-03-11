@@ -1,4 +1,6 @@
-# Core dependencies
+# ======================
+# Production Dependencies
+# ======================
 agency-swarm
 click==7.1.2
 Flask==1.1.2
@@ -11,7 +13,10 @@ inquirer==3.4.0
 pyperclip==1.9.0
 gradio
 
-# Development dependencies
+# ======================
+# Development Dependencies
+# (Required for local setup and CI/CD)
+# ======================
 pytest>=7.0.0
 ruff>=0.3.4
 mypy>=1.0.0
