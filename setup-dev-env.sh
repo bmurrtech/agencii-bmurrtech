@@ -254,24 +254,24 @@ ruff check main.py run_tests.py tools/ --no-fix --show-fixes
 pytest tests/
 ```
 
-## Branch Naming Convention
+## Branch & Commit Convention
 ```bash
-[TYPE][SP-X] Brief Description #IssueNumber
+TYPE/SP-X: Brief Description
 
 # Examples:
-[FEAT][SP-5] OAuth2 Social Login Integration #123
-[FIX][SP-2] Resolve API Rate Limiting Bug #456
-[REFACTOR][SP-3] Optimize Database Query Performance #789
-[DOCS][SP-1] Update API Authentication Docs #234
-[TEST][SP-2] Add E2E Tests for Payment Flow #567
+FEAT/SP-5: OAuth2 Social Login Integration
+FIX/SP-2: Resolve API Rate Limiting Bug
+REFAC/SP-3: Optimize Database Query Performance
+DOCS/SP-1: Update API Authentication Docs
+TEST/SP-2: Add E2E Tests for Payment Flow
 ```
 
 ### Type Categories
-- `[FEAT]` - New feature
-- `[FIX]` - Bug fix
-- `[REFACTOR]` - Code restructuring
-- `[DOCS]` - Documentation
-- `[TEST]` - Testing changes
+- `FEAT` - New feature
+- `FIX` - Bug fix
+- `REFAC` - Code restructuring
+- `DOCS` - Documentation
+- `TEST` - Testing changes
 
 ### Story Points (SP)
 - `SP-1` - Quick fix (< 1 hour)
@@ -289,7 +289,6 @@ pytest tests/
 ## Protected Branches
 - `main` - Production code (PM access only)
 - `staging` - Pre-production testing
-- `production` - Live deployment
 
 ## Development Flow
 1. Branch from `staging`
@@ -318,26 +317,35 @@ EOL
     log_success "DEV_README.md created"
 fi
 
-# Display development workflow guidance
+# Update the workflow guidance display
 echo ""
 log_info "Development Workflow Guidelines:"
-echo "1. Branch Naming Conventions:"
-echo "   • feat/XXX-description  : For new features"
-echo "   • fix/XXX-description     : For bug fixes"
-echo "   • hotfix/XXX-description  : For urgent fixes"
-echo "   • release/X.Y.Z          : For releases"
-echo "   • dev/username/description: For personal development"
-
+echo "1. Branch & Commit Convention:"
+echo "   TYPE/SP-X: Brief Description"
+echo ""
+echo "   Types:"
+echo "   • FEAT  - New feature"
+echo "   • FIX   - Bug fix"
+echo "   • REFAC - Code restructuring"
+echo "   • DOCS  - Documentation"
+echo "   • TEST  - Testing changes"
+echo ""
+echo "   Story Points:"
+echo "   • SP-1 - Quick fix (< 1 hour)"
+echo "   • SP-2 - Simple task (2-4 hours)"
+echo "   • SP-3 - Medium task (1 day)"
+echo "   • SP-5 - Complex task (2-3 days)"
+echo "   • SP-8 - Major feature (3+ days)"
 echo ""
 echo "2. Code Quality Tools (Advisory Mode):"
 echo "   • Check issues : pre-commit run --all-files"
-echo "   • Format check: ruff format . --check"
-echo "   • Lint check  : ruff check . --no-fix --show-fixes"
-
+echo "   • Format check: ruff format main.py run_tests.py tools/"
+echo "   • Lint check  : ruff check main.py run_tests.py tools/ --no-fix --show-fixes"
 echo ""
-echo "3. Commit Message Format:"
-echo "   [TYPE][SP-X] Brief Description #IssueNumber"
-echo "   Types: FEAT, FIX, DOCS, REFACTOR, TEST"
+echo "3. Branch Flow:"
+echo "   • Always branch from staging"
+echo "   • Create PR to staging"
+echo "   • PM merges to main after review"
 
 echo ""
 log_info "IMPORTANT: To activate the Python virtual environment, please run:"

@@ -51,34 +51,41 @@ The purpose of this template is to demonstrate best practices for setting up an 
 ```bash
 main        # Production-ready code (PM controlled)
 staging     # Pre-production testing (merge your branches here)
-feature/*   # New features (e.g., feature/AUTH-123-oauth)
-fix/*       # Bug fixes (e.g., fix/UI-456-button-alignment)
-hotfix/*    # Urgent fixes (e.g., hotfix/SEC-789-vulnerability)
-release/*   # Release branches (e.g., release/1.2.0)
-dev/*       # Personal development branches
 ```
 
-### 💬 Commit Message Format
-We follow Conventional Commits standard:
+### 💬 Commit Message Format & Pull Request Guidelines
+
 ```bash
-<type>(<scope>): <description>
+TYPE/SP-X: Brief Description
 
-# Examples:
-feat(auth): implement OAuth2 login
-fix(api): resolve rate limiting issue
-docs: update installation guide
+# Real Examples
+FEAT/SP-5: OAuth2 Social Login Integration
+FIX/SP-2: Resolve API Rate Limiting Bug
+REFAC/SP-3: Optimize Database Query Performance
+DOCS/SP-1: Update API Authentication Docs
+TEST/SP-2: Add E2E Tests for Payment Flow
 ```
 
-#### Type Prefixes
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation
-- `style`: Formatting
-- `refactor`: Code restructuring
-- `test`: Testing
-- `chore`: Maintenance
-- `perf`: Performance
-- `ci`: CI/CD changes
+**Type Categories:**
+- `FEAT` - New feature
+- `FIX` - Bug fix
+- `REFAC` - Code restructuring/refactoring
+- `DOCS` - Documentation
+- `TEST` - Testing changes
+
+**Story Points (SP):**
+- `SP-1` - Quick fix (< 1 hour)
+- `SP-2` - Simple task (2-4 hours)
+- `SP-3` - Medium task (1 day)
+- `SP-5` - Complex task (2-3 days)
+- `SP-8` - Major feature (3+ days)
+- `SP-13` - Project milestone (5+ days)
+
+#### Quick Tips
+1. Keep PRs focused and under SP-5 (for agile DevOps)
+2. Add screenshots for UI changes
+3. Tag your Project Manager in urgent reviews (on Slack)
+4. Use draft PRs for early feedback
 
 ### 🔄 Development Workflow
 
@@ -86,7 +93,7 @@ docs: update installation guide
    ```bash
    git checkout staging
    git pull
-   git checkout -b feature/XXX-description
+   git checkout -b feat/SP-3: <description>
    ```
 
 2. **Pre-commit Checks**
@@ -100,7 +107,7 @@ docs: update installation guide
 3. **Making Changes**
    ```bash
    git add .
-   git commit -m "[TYPE][SP-X] description #issue"
+   git commit -m "[TYPE][SP-X]: description"
    ```
 
 4. **Create Pull Request to Staging**
@@ -132,53 +139,6 @@ ruff check --fix .
 # Run all hooks
 pre-commit run --all-files
 ```
-
-### 🎯 Pull Request Guidelines
-
-#### PR Naming Convention
-```bash
-[TYPE][SP-X] Brief Description #IssueNumber
-
-# Real Examples:
-[FEAT][SP-5] OAuth2 Social Login Integration #123
-[FIX][SP-2] Resolve API Rate Limiting Bug #456
-[REFACTOR][SP-3] Optimize Database Query Performance #789
-[DOCS][SP-1] Update API Authentication Docs #234
-[TEST][SP-2] Add E2E Tests for Payment Flow #567
-```
-
-**Type Categories:**
-- `[FEAT]` - New feature
-- `[FIX]` - Bug fix
-- `[REFACTOR]` - Code restructuring
-- `[DOCS]` - Documentation
-- `[TEST]` - Testing changes
-
-**Story Points (SP):**
-- `SP-1` - Quick fix (< 1 hour)
-- `SP-2` - Simple task (2-4 hours)
-- `SP-3` - Medium task (1 day)
-- `SP-5` - Complex task (2-3 days)
-- `SP-8` - Major feature (3+ days)
-- `SP-13` - Project milestone (5+ days)
-
-#### Review Process
-
-**Status Tags:**
-- 🟢 `[READY]` - Ready for review
-- 🟡 `[WIP]` - Work in progress
-- 🔴 `[BLOCKED]` - Needs help
-
-**Merge Checklist:**
-- [ ] Tests passing
-- [ ] Code formatted (ruff)
-- [ ] No secrets exposed
-
-#### Quick Tips
-1. Keep PRs focused and under SP-5 (for agile DevOps)
-2. Add screenshots for UI changes
-3. Tag your Project Manager in urgent reviews (on Slack)
-4. Use draft PRs for early feedback
 
 ## Running Tests
 
