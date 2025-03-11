@@ -60,3 +60,14 @@ repos:
         language: system
         stages: [pre-push]
         verbose: true
+      - id: prevent-merge-commits
+        name: Block merge commits
+        entry: |
+          #!/bin/bash
+          if git log --merges -n 1 --pretty=%H HEAD^..HEAD | grep -q .; then
+            echo "❌ Merge commits prohibited! Use rebase instead."
+            exit 1
+          fi
+        language: system
+        stages: [commit-msg]
+        verbose: true

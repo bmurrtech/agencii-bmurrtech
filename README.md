@@ -47,14 +47,28 @@ The purpose of this template is to demonstrate best practices for setting up an 
 
 ## Development Workflow & Standards
 
-### 🌿 Branch Structure
+If you haven't already, watch [How to Use Git & GitHub Playbook](https://www.notion.so/vrsen-ai/How-to-Use-Git-GitHub-Playbook-11a5bd4b16a680c39ab0cc9209abe521)
+
+### Linear Git History Enforcement
+We enforce a clean, linear history without merge commits:
 ```bash
-main        # Production-ready code (PM controlled)
-staging     # Pre-production testing (merge your branches here)
+* a1b2c3d (HEAD -> main) Add feature Z
+* e4f5g6h Refactor module Y
+* i7j8k9l Fix bug in component X
 ```
 
-### 💬 Commit Message Format & Pull Request Guidelines
+**Why Linear?**
+- Enables efficient debugging with `git bisect`
+- Clear chronological change tracking
+- Eliminates merge commit noise
 
+**Enforcement:**
+```bash
+# Always rebase when updating
+git pull --rebase origin main
+```
+
+### 💬 Atomic Commit Convention
 ```bash
 TYPE/SP-X: Brief Description
 
@@ -81,63 +95,60 @@ TEST/SP-2: Add E2E Tests for Payment Flow
 - `SP-8` - Major feature (3+ days)
 - `SP-13` - Project milestone (5+ days)
 
-#### Quick Tips
-1. Keep PRs focused and under SP-5 (for agile DevOps)
-2. Add screenshots for UI changes
-3. Tag your Project Manager in urgent reviews (on Slack)
-4. Use draft PRs for early feedback
+### 🔄 Git Workflow
+```mermaid
+graph TD
+    A[Feature Branch] -->|Rebase| B(main)
+    B -->|Tag| C[Production]
+```
+![git_worklow](https://imgur.com/a/yz4Kj9f)
 
-### 🔄 Development Workflow
-
-1. **Start New Work**
+1. **Branch Strategy**
    ```bash
-   git checkout staging
-   git pull
-   git checkout -b feat/SP-3: <description>
+   git checkout -b feat/SP-3-add-feature
    ```
+   - Branch directly from `main`
+   - Single task focus per branch
+   - Delete after merge
 
-2. **Pre-commit Checks**
-   The following checks run automatically on crucial files:
-   - Code formatting (Ruff)
-   - Linting
-   - Secret scanning
-   - Branch naming
-   - Tests
+2. **Commit Standards**
+   - Atomic, self-contained changes
+   - Imperative mood ("Add feature" not "Added feature")
+   - Max 24h between commits
 
-3. **Making Changes**
-   ```bash
-   git add .
-   git commit -m "[TYPE][SP-X]: description"
-   ```
+3. **PR Management**
+   - "Rebase and Merge" only
+   - Max 3 days old
+   - Attach Notion task link
+   - PM-controlled merges
 
-4. **Create Pull Request to Staging**
-   ```bash
-   git checkout staging
-   git pull
-   git checkout your-branch
-   git merge staging
-   git push origin your-branch
-   ```
-
-5. **After PR Approval**
-   - Code is merged to `staging`
-   - Railway deploys for testing
-   - PM reviews and merges to `main` if approved
-
-## Code Quality
-
-### Pre-commit Hooks
-We use pre-commit hooks with Ruff for linting and formatting:
-
+### Essential Commands
 ```bash
-# Format code
-ruff format .
+# Update branch safely
+git pull --rebase origin main
 
-# Fix lint issues
-ruff check --fix .
+# Fix last commit
+git commit --amend --no-edit
 
-# Run all hooks
+# Create PR quickly
+git push --set-upstream origin $(git branch --show-current)
+
+# Revert safely
+git revert <commit-hash>
+```
+
+## Code Quality Enforcement
+
+### Pre-commit Checks
+```bash
+# Advisory checks (no auto-fix)
 pre-commit run --all-files
+
+# Format main files
+ruff format main.py run_tests.py tools/
+
+# Lint check
+ruff check main.py run_tests.py tools/ --no-fix --show-fixes
 ```
 
 ## Running Tests
@@ -199,3 +210,16 @@ If pre-commit hooks fail:
 - [Conventional Commits](https://www.conventionalcommits.org/)
 - [Pre-commit Documentation](https://pre-commit.com/)
 - [Ruff Documentation](https://docs.astral.sh/ruff/)
+
+## Protected Branch Policy
+- `main` - Production (PM access only)
+- All changes via PR
+- Linear history enforced
+- Pre-commit checks required
+
+## Development Flow
+1. Branch from `main`
+2. Develop with atomic commits
+3. Rebase onto latest main
+4. Push and create PR
+5. Review → Rebase Merge → Delete branch

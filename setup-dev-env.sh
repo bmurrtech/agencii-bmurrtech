@@ -24,6 +24,12 @@ command_exists() {
 
 # Check Git installation and configuration
 if command_exists git; then
+    # Enforce rebase by default
+    if ! git config --get pull.rebase > /dev/null; then
+        log_info "Setting git pull to use rebase by default..."
+        git config --global pull.rebase true
+    fi
+    
     # Check if git user is configured
     if ! git config --get user.name > /dev/null || ! git config --get user.email > /dev/null; then
         log_warning "Git user not fully configured. Please configure:"
@@ -219,42 +225,31 @@ if [ ! -f "DEV_README.md" ]; then
     cat > DEV_README.md << 'EOL'
 # Development Guide
 
-## Quick Start
-1. Activate virtual environment:
-   ```bash
-   source .venv/bin/activate   # Unix
-   .venv\Scripts\activate.bat  # Windows
-   ```
+## Linear Git History Enforcement
 
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-## Code Quality Tools
-
-### Pre-commit Hooks (Advisory Mode)
+We enforce a clean, linear history without merge commits:
 ```bash
-# Run all checks
-pre-commit run --all-files
-
-# Format code (main deployment files and tools only)
-ruff format main.py run_tests.py tools/
-
-# Check linting (main deployment files and tools only)
-ruff check main.py run_tests.py tools/ --no-fix --show-fixes
+* a1b2c3d (HEAD -> main) Add feature Z
+* e4f5g6h Refactor module Y
+* i7j8k9l Fix bug in component X
 ```
 
-### Testing
+**Why Linear?**
+- Enables efficient debugging with `git bisect`
+- Clear chronological change tracking
+- Eliminates merge commit noise
+
+**Enforcement:**
 ```bash
-pytest tests/
+# Always rebase when updating
+git pull --rebase origin main
 ```
 
-## Branch & Commit Convention
+## 💬 Atomic Commit Convention
 ```bash
 TYPE/SP-X: Brief Description
 
-# Examples:
+# Real Examples
 FEAT/SP-5: OAuth2 Social Login Integration
 FIX/SP-2: Resolve API Rate Limiting Bug
 REFAC/SP-3: Optimize Database Query Performance
@@ -262,58 +257,144 @@ DOCS/SP-1: Update API Authentication Docs
 TEST/SP-2: Add E2E Tests for Payment Flow
 ```
 
-### Type Categories
+**Type Categories:**
 - `FEAT` - New feature
 - `FIX` - Bug fix
-- `REFAC` - Code restructuring
+- `REFAC` - Code restructuring/refactoring
 - `DOCS` - Documentation
 - `TEST` - Testing changes
 
-### Story Points (SP)
+**Story Points (SP):**
 - `SP-1` - Quick fix (< 1 hour)
 - `SP-2` - Simple task (2-4 hours)
 - `SP-3` - Medium task (1 day)
 - `SP-5` - Complex task (2-3 days)
 - `SP-8` - Major feature (3+ days)
+- `SP-13` - Project milestone (5+ days)
 
-## Branch Management
-- Always branch from `staging`
-- Push changes to `staging` via PR
-- PM controls merges to `main`
-- Delete branches after merge
+## 🔄 Git Workflow
 
-## Protected Branches
-- `main` - Production code (PM access only)
-- `staging` - Pre-production testing
+1. **Branch Strategy**
+   ```bash
+   git checkout -b feat/SP-3-add-feature
+   ```
+   - Branch directly from `main`
+   - Single task focus per branch
+   - Delete after merge
+
+2. **Commit Standards**
+   - Atomic, self-contained changes
+   - Imperative mood ("Add feature" not "Added feature")
+   - Max 24h between commits
+
+3. **PR Management**
+   - "Rebase and Merge" only
+   - Max 3 days old
+   - Attach Notion task link
+   - PM-controlled merges
+
+## Essential Commands
+```bash
+# Update branch safely
+git pull --rebase origin main
+
+# Fix last commit
+git commit --amend --no-edit
+
+# Create PR quickly
+git push --set-upstream origin $(git branch --show-current)
+
+# Revert safely
+git revert <commit-hash>
+```
+
+## Code Quality Tools
+
+### Pre-commit Checks (Advisory Mode)
+```bash
+# Run all checks
+pre-commit run --all-files
+
+# Format main files
+ruff format main.py run_tests.py tools/
+
+# Lint check
+ruff check main.py run_tests.py tools/ --no-fix --show-fixes
+```
+
+## Protected Branch Policy
+- `main` - Production (PM access only)
+- All changes via PR
+- Linear history enforced
+- Pre-commit checks required
 
 ## Development Flow
-1. Branch from `staging`
-2. Make changes
-3. Run pre-commit checks
-4. Push to your branch
-5. Create PR to `staging`
-6. Wait for review & Railway testing
-7. PM merges to `main` if approved
+1. Branch from `main`
+2. Develop with atomic commits
+3. Rebase onto latest main
+4. Push and create PR
+5. Review → Rebase Merge → Delete branch
 
-## Common Issues & Solutions
+## Troubleshooting
 
-### Pre-commit Failures
-1. Review error messages
+If pre-commit hooks fail:
+1. Review the error messages
 2. Run format and lint fixes
 3. Commit changes
 4. If issues persist, consult team lead
 
-### Environment Setup
-1. Ensure virtual environment is activated
-2. Verify all dependencies are installed
-3. Check .env file configuration
+## Security Considerations
+
+- No credentials in code
+- Use environment variables
+- Regular dependency updates
+- Security scanning in CI/CD
 
 For more detailed information, refer to the main README.md
 EOL
     log_success "DEV_README.md created"
 fi
 
-# Update the workflow guidance display
+# Update .pre-commit-config.yaml creation
+if [ ! -f ".pre-commit-config.yaml" ]; then
+    log_info "Creating .pre-commit-config.yaml..."
+    cat > .pre-commit-config.yaml << 'EOL'
+repos:
+  # ... existing hooks ...
+
+  # Merge commit prevention
+  - repo: local
+    hooks:
+      - id: prevent-merge-commits
+        name: Block merge commits
+        entry: |
+          #!/bin/bash
+          if git log --merges -n 1 --pretty=%H HEAD^..HEAD | grep -q .; then
+            echo "❌ Merge commits prohibited! Use rebase instead."
+            exit 1
+          fi
+        language: system
+        stages: [commit-msg]
+        verbose: true
+
+      - id: protected-branch-check
+        name: Protected Branch Warning
+        entry: |
+          #!/bin/bash
+          branch=$(git rev-parse --abbrev-ref HEAD)
+          if [[ $branch =~ ^(main|master|develop|production|staging)$ ]]; then
+              echo "⚠️  Warning: You're on protected branch: $branch"
+              exit 1
+          fi
+          exit 0
+        language: system
+        stages: [pre-push]
+        verbose: true
+EOL
+    log_success ".pre-commit-config.yaml created"
+fi
+
+# Update workflow guidance to match new strategy
 echo ""
 log_info "Development Workflow Guidelines:"
 echo "1. Branch & Commit Convention:"
@@ -339,8 +420,8 @@ echo "   • Format check: pre-commit run ruff-format"
 echo "   • Lint check  : ruff check main.py run_tests.py tools/ --no-fix --show-fixes"
 echo ""
 echo "3. Branch Flow:"
-echo "   • Always branch from staging"
-echo "   • Create PR to staging"
+echo "   • Branch directly from main"
+echo "   • Rebase onto latest main before PR"
 echo "   • PM merges to main after review"
 
 echo ""
