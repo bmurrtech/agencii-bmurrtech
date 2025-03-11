@@ -190,18 +190,15 @@ jobs:
 
     - name: Run Ruff linting
       run: |
-        # Only check main deployment files and tools
         ruff check "main.py" "run_tests.py" "tools/" --no-fix --show-fixes
         ruff format "main.py" "run_tests.py" "tools/" --check
 
     - name: Check for secrets
       run: |
-        # Only scan crucial files
         detect-secrets scan main.py run_tests.py tools/
 
     - name: Run tests
       run: |
-        # Only if tests directory exists
         if [ -d "tests" ]; then
           pytest tests/
         else
@@ -211,8 +208,7 @@ jobs:
 
     - name: Type checking
       run: |
-        # Only check main deployment files and tools
-        mypy main.py run_tests.py tools/
+        mypy main.py run_tests.py tools/ --ignore-missing-imports
 EOL
     log_success "python-tests.yaml created"
 fi

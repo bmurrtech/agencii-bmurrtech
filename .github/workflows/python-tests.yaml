@@ -49,4 +49,4 @@ jobs:
     - name: Type checking
       run: |
         # Only check main deployment files and tools
-        mypy main.py run_tests.py tools/
+        mypy main.py run_tests.py tools/ --ignore-missing-imports

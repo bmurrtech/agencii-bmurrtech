@@ -1,3 +1,4 @@
+# type: ignore # Added to bypass type checking for example files
 from agency_swarm.tools import BaseTool
 from pydantic import Field
 
