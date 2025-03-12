@@ -245,24 +245,52 @@ We enforce a clean, linear history without merge commits:
 git pull --rebase origin main
 ```
 
-## 💬 Atomic Commit Convention
-```bash
-TYPE/SP-X: Brief Description
+## 🔄 Git Workflow & Conventions
 
-# Real Examples
-FEAT/SP-5: OAuth2 Social Login Integration
-FIX/SP-2: Resolve API Rate Limiting Bug
-REFAC/SP-3: Optimize Database Query Performance
-DOCS/SP-1: Update API Authentication Docs
-TEST/SP-2: Add E2E Tests for Payment Flow
-```
+1. **Branch Strategy & Commit Convention**
+   ```bash
+   # Branch Format: prefix/DEV-####-SP-#-description
+   git checkout -b feat/DEV-2157-SP-3-add-search-api
+   
+   # Commit Format: prefix/SP-#: Description
+   git commit -m "feat/SP-3: Add search API endpoint"
+   ```
+   - Branch directly from `main`
+   - Single task focus per branch
+   - Branch & commit naming components:
+     * `prefix/` - Semantic prefix indicating change type
+     * `DEV-####` - Notion task ID (copy from task properties, branches only)
+     * `SP-#` - Story point estimate (1,2,3,5,8,13)
+     * Description in kebab-case for branches, sentence case for commits
 
-**Type Categories:**
-- `FEAT` - New feature
-- `FIX` - Bug fix
-- `REFAC` - Code restructuring/refactoring
-- `DOCS` - Documentation
-- `TEST` - Testing changes
+   **Semantic Prefix Legend:**
+   ```
+   feat/   - New feature or significant enhancement
+   fix/    - Bug fixes and patches
+   hotfix/ - Critical production fixes
+   refac/  - Code restructuring without behavior change
+   docs/   - Documentation updates only
+   test/   - Adding or modifying tests
+   style/  - Code style/formatting changes
+   perf/   - Performance improvements
+   chore/  - Maintenance tasks, dependencies, etc.
+   ci/     - CI/CD pipeline changes
+   ```
+
+   **Examples:**
+   Branch names:
+   ```bash
+   feat/DEV-2157-SP-3-add-search-api
+   fix/DEV-3891-SP-1-login-validation
+   refac/DEV-4200-SP-5-optimize-auth-flow
+   ```
+   
+   Commit messages:
+   ```bash
+   feat/SP-3: Add search API endpoint with rate limiting
+   fix/SP-1: Resolve login validation edge case
+   refac/SP-5: Optimize authentication flow for better performance
+   ```
 
 **Story Points (SP):**
 - `SP-1` - Quick fix (< 1 hour)
@@ -272,33 +300,26 @@ TEST/SP-2: Add E2E Tests for Payment Flow
 - `SP-8` - Major feature (3+ days)
 - `SP-13` - Project milestone (5+ days)
 
-## 🔄 Git Workflow
-
-1. **Branch Strategy**
-   ```bash
-   git checkout -b feat/SP-3-add-feature
-   ```
-   - Branch directly from `main`
-   - Single task focus per branch
-   - Delete after merge
-
 2. **Commit Standards**
    - Atomic, self-contained changes
    - Imperative mood ("Add feature" not "Added feature")
    - Max 24h between commits
+   - Short & precise messages
+   - Never repeat previous commits
+   - Self-contained changes only
 
 3. **PR Management**
-   - "Rebase and Merge" only
+   - "Rebase and merge" only to maintain linear history
    - Max 3 days old
    - Attach Notion task link
-   - PM-controlled merges
+   - PM-controlled merges to `main`
 
 ## Essential Commands
 ```bash
-# Update branch safely
+# Update branch safely with latest main
 git pull --rebase origin main
 
-# Fix last commit
+# Add forgotten changes to last commit
 git commit --amend --no-edit
 
 # Create PR quickly
@@ -306,6 +327,12 @@ git push --set-upstream origin $(git branch --show-current)
 
 # Revert safely
 git revert <commit-hash>
+
+# Rebase with auto-stash for local changes
+git pull --rebase --autostash
+
+# Add all modified files and commit
+git commit --all --message "feat/SP-3: your message"
 ```
 
 ## Code Quality Tools
@@ -323,17 +350,17 @@ ruff check main.py run_tests.py tools/ --no-fix --show-fixes
 ```
 
 ## Protected Branch Policy
-- `main` - Production (PM access only)
-- All changes via PR
+- `main` - Production code (PM access only)
+- All changes via PR with rebase
 - Linear history enforced
 - Pre-commit checks required
 
 ## Development Flow
-1. Branch from `main`
-2. Develop with atomic commits
+1. Create branch from `main`
+2. Make atomic commits
 3. Rebase onto latest main
-4. Push and create PR
-5. Review → Rebase Merge → Delete branch
+4. Create PR
+5. PM reviews and merges via rebase
 
 ## Troubleshooting
 
