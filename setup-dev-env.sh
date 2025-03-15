@@ -106,49 +106,38 @@ EOL
     log_success ".pre-commit-config.yaml created"
 fi
 
-# Check if pre-commit is installed; if not, install it
-if ! command_exists pre-commit; then
-    log_info "pre-commit not found. Installing pre-commit via pip..."
-    if command_exists pip3; then
-        pip3 install pre-commit
-    elif command_exists pip; then
-        pip install pre-commit
+# Virtual Environment Setup
+VENV_DIR=".venv"
+VENV_ACTIVATE="$VENV_DIR/bin/activate"
+VENV_REQUIRED=true
+
+if [ -d "$VENV_DIR" ]; then
+    log_info "Using existing virtual environment at $VENV_DIR"
+else
+    log_info "Creating Python virtual environment at $VENV_DIR..."
+    if command_exists python3; then
+        python3 -m venv "$VENV_DIR" || {
+            log_error "Failed to create virtual environment"
+            exit 1
+        }
+        log_success "Virtual environment created"
     else
-        log_error "Error: pip is not installed. Please install pip and re-run the script."
+        log_error "Python 3 is required but not found"
         exit 1
     fi
-    log_success "pre-commit installed successfully"
-else
-    log_info "pre-commit is already installed"
 fi
 
-# Update pre-commit configuration (fixes deprecated stage names)
-log_info "Updating pre-commit configuration..."
-pre-commit migrate-config
-log_success "pre-commit configuration updated"
-
-# Install pre-commit hooks with all necessary hook types
-log_info "Installing pre-commit hooks..."
-for hook_type in "pre-commit" "commit-msg" "pre-push" "post-checkout" "prepare-commit-msg" "post-commit"; do
-    log_info "Installing $hook_type hook..."
-    pre-commit install --hook-type $hook_type
-done
-log_success "pre-commit hooks installed"
-
-# Virtual Environment Setup
-if [ ! -d ".venv" ]; then
-    log_info "Creating a Python virtual environment in .venv..."
-    if command_exists python3; then
-        python3 -m venv .venv
-    elif command_exists python; then
-        python -m venv .venv
-    else
-        log_error "Error: Python is not installed. Please install Python and re-run the script."
+# Cross-platform activation
+log_info "Activating virtual environment..."
+if [ -f "$VENV_ACTIVATE" ]; then
+    source "$VENV_ACTIVATE" || {
+        log_error "Failed to activate virtual environment"
         exit 1
-    fi
-    log_success "Virtual environment created in .venv directory"
+    }
+    log_success "Virtual environment activated"
 else
-    log_info "Virtual environment already exists"
+    log_warning "Virtual environment activation script not found at $VENV_ACTIVATE"
+    VENV_REQUIRED=false
 fi
 
 # Check if we need to create an initial .env file
@@ -554,3 +543,41 @@ check_requirements() {
         fi
     fi
 }
+
+# Install pre-commit within virtual environment
+if $VENV_REQUIRED; then
+    log_info "Installing pre-commit inside virtual environment..."
+    python -m pip install --upgrade pip || {
+        log_error "Failed to upgrade pip"
+        exit 1
+    }
+    python -m pip install pre-commit || {
+        log_error "Failed to install pre-commit"
+        exit 1
+    }
+else
+    log_warning "Installing pre-commit system-wide (not recommended)"
+    if command_exists pip3; then
+        pip3 install --user pre-commit || {
+            log_error "Failed to install pre-commit"
+            exit 1
+        }
+    else
+        pip install --user pre-commit || {
+            log_error "Failed to install pre-commit"
+            exit 1
+        }
+    fi
+fi
+
+# Add cross-platform deactivation guidance
+echo ""
+log_success "---------------------------------------------"
+log_success "Setup complete! Virtual environment active."
+log_info "To exit the virtual environment later, run:"
+log_info "  deactivate"
+log_info ""
+log_info "To reactivate the environment:"
+log_info "  Unix/MacOS: source $VENV_ACTIVATE"
+log_info "  Windows:    $VENV_DIR\\Scripts\\activate.bat"
+log_success "---------------------------------------------"
